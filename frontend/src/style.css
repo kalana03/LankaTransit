@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Hides the default browser calendar icon for your landing page */
+body {
+    background-color: #0f172a;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+}
+
+.bg-dark {
+    background-color: #0f172a;
+}
+
+.font-main{
+    font-family: 'Inter', sans-serif;
+}
+
+.font-para{
+
+    font-size: 14px;
+    line-height: 1.5;
+    color: #f7f7fc;
+}
+
+.text-dark {
+    color: #0f172a;
+}
+
+.text-acc{
+    color: #2563eb;
+}
+
+.bg-acc{
+    background-color: #2563eb;
+}
+
+.border-acc{
+    border-color: #2563eb;
+
+}
