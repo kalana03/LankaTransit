@@ -34,14 +34,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .text-acc{
-    color: #2563eb;
+    color: #5eafff;
 }
 
 .bg-acc{
-    background-color: #2563eb;
+    background-color: #5eafff;
 }
 
 .border-acc{
-    border-color: #2563eb;
+    border-color: #5eafff;
 
 }

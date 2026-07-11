@@ -1,41 +1,64 @@
 <script setup lang="ts">
-// Navigation logic here if needed
+import { ref } from 'vue';
+
+const navLinks = [
+  { name: 'Search Trips', href: '#', active: false },
+  { name: 'My Bookings', href: '#', active: false },
+  { name: 'Help', href: '#', active: false },
+];
+
+const steps = [
+  { num: 1, name: 'Select Route', status: 'completed' },
+  { num: 2, name: 'Choose Seats', status: 'current' },
+  { num: 3, name: 'Payment', status: 'upcoming' },
+];
 </script>
 
 <template>
-  <header class="fixed top-0 z-50 w-full bg-transparent backdrop-blur-md border-b border-white/5 font-sans">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 lg:py-5">
+  <!-- Fixed Header: Frosted Glass over #0f172a background -->
+  <header class="fixed top-0 left-0 w-full z-50 bg-[#0f172a]/0 backdrop-blur-xl border-b border-slate-800 transition-all font-sans">
+    
+    <!-- Top Row: Logo & Navigation -->
+    <div class="h-16 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between border-b border-slate-800/50">
       
-      <!-- Brand -->
-      <a href="/" class="text-xl lg:text-2xl font-bold tracking-tight text-white outline-none">
-        Lanka<span class="text-[#5fa8ff]">Transit</span>
+      <!-- Logo: LankaTransit -->
+      <a href="/" class="flex items-center gap-2 group">
+        <svg class="w-6 h-6 text-[#5eafff] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+        </svg>
+        <span class="text-xl font-bold text-white tracking-wide">
+          Lanka<span class="text-[#5eafff]">Transit</span>
+        </span>
       </a>
 
-      <!-- Navigation -->
-      <nav>
-        <ul class="flex items-center gap-4 lg:gap-10 text-sm lg:text-base font-semibold text-white">
-          
-          <!-- Hidden on mobile, visible on medium+ screens -->
-          <li class="hidden md:block">
-            <a href="#" class="text-slate-300 hover:text-white transition-colors outline-none">
-              Help
-            </a>
-          </li>
-          <li class="hidden md:block">
-            <a href="#" class="text-slate-300 hover:text-white transition-colors outline-none">
-              Sign In
-            </a>
-          </li>
-
-          <!-- CTA Button (Visible on all screens, slightly smaller padding on mobile) -->
-          <li>
-            <button class="bg-[#5fa8ff] text-[#0a1128] px-5 py-2 lg:px-7 lg:py-2.5 rounded-full font-bold transition-all hover:bg-[#4a90e2] active:scale-95 shadow-md">
-              Book a Ride
-            </button>
-          </li>
-        </ul>
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-12">
+        <a 
+          v-for="link in navLinks" 
+          :key="link.name" 
+          :href="link.href"
+          class="text-sm font-semibold transition-colors duration-200"
+          :class="link.active ? 'text-white' : 'text-slate-200 hover:text-white'"
+        >
+          {{ link.name }}
+        </a>
       </nav>
-      
+
+      <!-- Right Side: User Profile / Account Pill -->
+      <div class="flex items-center gap-4">
+        
+        
+        <!-- User Avatar Pill -->
+        <button class="flex items-center gap-2 pl-2 pr-4 py-1.5 bg-slate-800 rounded-full border border-slate-700 hover:border-slate-500 transition-colors cursor-pointer group">
+          <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-[#5eafff] to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold shadow-sm">
+            JD
+          </div>
+          <span class="text-sm font-medium text-slate-200 group-hover:text-white">John Doe</span>
+        </button>
+      </div>
+
     </div>
+
+    
   </header>
 </template>

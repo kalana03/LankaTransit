@@ -6,6 +6,31 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Home',
     // We will create this view in the next step
     component: () => import('../views/Landing.vue')
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    // We will create this view in the next step
+    component: () => import('../views/Login.vue')
+  },
+  {
+    path: '/results',
+    name: 'Results',
+    // We will create this view in the next step
+    component: () => import('../views/Results.vue')
+  },
+  {
+    path: '/booking',
+    name: 'Booking',
+    // We will create this view in the next step
+    component: () => import('../views/Booking.vue')
+  }
+  ,
+  {
+    path: '/checkout',
+    name: 'CheckOut',
+    // We will create this view in the next step
+    component: () => import('../views/CheckOut.vue')
   }
 ]
 
