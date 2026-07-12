@@ -31,6 +31,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'CheckOut',
     // We will create this view in the next step
     component: () => import('../views/CheckOut.vue')
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    // We will create this view in the next step
+    component: () => import('../views/AdminDashboard.vue')
   }
 ]
 
