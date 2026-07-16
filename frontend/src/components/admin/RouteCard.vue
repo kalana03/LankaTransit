@@ -11,8 +11,11 @@ const props = defineProps<{
     routeNumber: string;
     from: string;
     to: string;
+    status: 'Active' | 'Inactive';
   };
 }>();
+
+const isActive = computed(() => props.route.status === 'Active');
 
 const emit = defineEmits<{
   delete: [routeId: string];
@@ -59,16 +62,27 @@ const mapSrc = computed(() => {
     <div
       class="grid items-center gap-6 px-6 py-2 sm:px-8 md:grid-cols-[auto_auto_1fr]"
     >
-      <!-- Route ID -->
-      <div>
-       
+      <!-- Status dot + Route ID -->
+<div>
 
-        <span
-          class="inline-flex rounded-full border border-slate-700/60 bg-slate-900/50 px-4 py-2 text-sm font-bold text-white"
-        >
-          {{ route.id }}
-        </span>
-      </div>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <span
+      :class="[
+        'inline-block h-3 w-3 rounded-full',
+        isActive
+          ? 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]'
+          : 'bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,0.9)]'
+      ]"
+    />
+
+    <span
+      class="inline-flex rounded-full border border-slate-700/60 bg-slate-900/50 px-4 py-2 text-sm font-bold text-white"
+    >
+      {{ route.id }}
+    </span>
+  </div>
+</div>
 
       <!-- Route Number -->
       <div>

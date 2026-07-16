@@ -6,25 +6,38 @@ import AdminSidebar from '../components/admin/Sidebar.vue';
 import Bookings from '../components/admin/Bookings.vue';
 import UpcomingTours from '../components/admin/UpcomingTours.vue';
 import Routes from '../components/admin/Routes.vue';
-// import Buses from './sections/Buses.vue';
-// import RegisteredBuses from './sections/RegisteredBuses.vue';
-// import BusOwners from './sections/BusOwners.vue';
-// import RegisteredCustomers from './sections/RegisteredCustomers.vue';
+import Buses from '../components/admin/Buses.vue';
+import Companies from '../components/admin/Companies.vue';
+import AnalyticsDashboard from '../components/admin/AnalyticsDashboard.vue';
+// ... imports same as before
 
-// State to track the active view
-const currentView = ref('Bookings');
+const currentView = ref('Dashboard');
 
-// 1. Map the string names from the sidebar to the imported Vue components
+// 1. Ensure these keys match EXACTLY what is in your Sidebar menu array
 const viewComponents: Record<string, any> = {
+  'Dashboard': AnalyticsDashboard,
   'Bookings': Bookings,
-  'Upcoming Tours': UpcomingTours, // Uncomment these as you build them
+  'Upcoming Tours': UpcomingTours,
   'Routes': Routes,
-  // 'Buses': Buses,
+  'Registered Buses': Buses,
+  'Companies': Companies, // <--- Ensure no space after 'Companies '
 };
 
-// 2. Computed property to return the correct component based on currentView
 const activeComponent = computed(() => {
-  return viewComponents[currentView.value] || Bookings; // Fallback to Bookings if not found
+  // Debugging: uncomment the line below to see what the sidebar is actually sending
+  // console.log('Sidebar Emitted:', currentView.value);
+  
+  const component = viewComponents[currentView.value];
+  
+  // If component is not found, force it to Dashboard to prevent a blank screen
+  return component ? component : AnalyticsDashboard;
+});
+
+// Reset scroll when view changes (Important for UX)
+import { watch } from 'vue';
+watch(currentView, () => {
+  const mainArea = document.querySelector('main');
+  if (mainArea) mainArea.scrollTop = 0;
 });
 </script>
 
@@ -55,7 +68,7 @@ const activeComponent = computed(() => {
       <div class="p-10 relative z-10">
         <Transition name="fade" mode="out-in">
           <!-- Vue will automatically swap the component here based on activeComponent -->
-          <component :is="activeComponent" />
+          <component :is="activeComponent" :key="currentView" />
         </Transition>
       </div>
 

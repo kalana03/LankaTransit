@@ -29,10 +29,8 @@ const navItems = [
   { name: 'Bookings', icon: Ticket },
   { name: 'Upcoming Tours', icon: CalendarDays },
   { name: 'Routes', icon: Route },
-  { name: 'Buses', icon: BusFront },
-  { name: 'Registered Buses', icon: ClipboardCheck },
-  { name: 'Bus Owners', icon: UserCog },
-  { name: 'Registered Customers', icon: Users }
+  { name: 'Registered Buses', icon: BusFront },
+  { name: 'Companies', icon: UserCog },
 ];
 
 const handleSignOut = () => {

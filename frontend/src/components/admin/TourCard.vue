@@ -72,7 +72,7 @@ defineProps({
         <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1.5 flex items-center gap-1.5">
           <Phone class="w-3 h-3 text-[#5eafff]" /> Contact
         </span>
-        <span class="text-slate-400 font-mono text-xs font-bold">{{ tour.driverPhone }}</span>
+        <span class="text-slate-400 font-mono text-sm font-bold">{{ tour.driverPhone }}</span>
       </div>
 
     </div>
