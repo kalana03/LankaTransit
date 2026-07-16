@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const navLinks = [
-  { name: 'Search Trips', href: '#', active: false },
-  { name: 'My Bookings', href: '#', active: false },
-  { name: 'Help', href: '#', active: false },
-];
 
 const steps = [
   { num: 1, name: 'Select Route', status: 'completed' },
@@ -31,18 +26,7 @@ const steps = [
         </span>
       </a>
 
-      <!-- Desktop Nav -->
-      <nav class="hidden md:flex items-center gap-12">
-        <a 
-          v-for="link in navLinks" 
-          :key="link.name" 
-          :href="link.href"
-          class="text-sm font-semibold transition-colors duration-200"
-          :class="link.active ? 'text-white' : 'text-slate-200 hover:text-white'"
-        >
-          {{ link.name }}
-        </a>
-      </nav>
+      
 
       <!-- Right Side: User Profile / Account Pill -->
       <div class="flex items-center gap-4">
