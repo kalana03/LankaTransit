@@ -1,78 +1,47 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { Search, BusFront } from 'lucide-vue-next';
 import RegisteredBusCard from './BusCard.vue';
+import { API_BASE } from '../../api';
+
+interface Bus {
+  id: string;
+  numberPlate: string;
+  make: string;
+  model: string;
+  seats: number;
+  company: string;
+}
 
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = 6;
 
-const buses = ref([
-  {
-    id: 'BUS-001',
-    numberPlate: 'NB-4587',
-    make: 'Ashok Leyland',
-    model: 'Viking',
-    seats: 54,
-    company: 'Lanka Express'
-  },
-  {
-    id: 'BUS-002',
-    numberPlate: 'NC-2194',
-    make: 'TATA',
-    model: 'Starbus',
-    seats: 49,
-    company: 'Island Travels'
-  },
-  {
-    id: 'BUS-003',
-    numberPlate: 'ND-7741',
-    make: 'Yutong',
-    model: 'ZK6118',
-    seats: 52,
-    company: 'Southern Lines'
-  },
-  {
-    id: 'BUS-004',
-    numberPlate: 'NA-3328',
-    make: 'Mitsubishi',
-    model: 'Rosa',
-    seats: 33,
-    company: 'Northern Route'
-  },
-  {
-    id: 'BUS-005',
-    numberPlate: 'NE-9086',
-    make: 'Ashok Leyland',
-    model: 'Falcon',
-    seats: 45,
-    company: 'Coastal Express'
-  },
-  {
-    id: 'BUS-006',
-    numberPlate: 'NP-1452',
-    make: 'TATA',
-    model: 'LP 913',
-    seats: 41,
-    company: 'Hilltop Coaches'
-  },
-  {
-    id: 'BUS-007',
-    numberPlate: 'NW-6810',
-    make: 'Yutong',
-    model: 'ZK6122',
-    seats: 55,
-    company: 'Lanka Express'
-  },
-  {
-    id: 'BUS-008',
-    numberPlate: 'NC-5543',
-    make: 'Mitsubishi',
-    model: 'Fuso',
-    seats: 40,
-    company: 'Island Travels'
+const buses = ref<Bus[]>([]);
+
+const loadBuses = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/buses`);
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      buses.value = [];
+      return;
+    }
+    buses.value = data.map((bus: any) => ({
+      id: String(bus.id),
+      numberPlate: String(bus.numberplate || bus.numberPlate || ''),
+      make: String(bus.make || ''),
+      model: String(bus.model || ''),
+      seats: Number(bus.seats) || 0,
+      company: String(bus.company || bus.company_id || ''),
+    }));
+  } catch (error) {
+    console.error('Failed to load buses:', error);
+    buses.value = [];
   }
-]);
+};
+
+onMounted(loadBuses);
 
 const filteredBuses = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();

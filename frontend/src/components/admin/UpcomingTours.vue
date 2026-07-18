@@ -1,71 +1,71 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Search, Filter } from 'lucide-vue-next';
-import TourCard from './TourCard.vue'; 
+import TourCard from './TourCard.vue';
+import { API_BASE } from '../../api';
 
-// --------------------------------------------------------
-// MOCK DATA GENERATOR
-// --------------------------------------------------------
-const generateMockTours = () => {
-  const locations = ['Colombo', 'Kandy', 'Galle', 'Matara', 'Jaffna', 'Trincomalee', 'Anuradhapura', 'Kurunegala'];
-  const companies = ['ExpressLine NCG', 'Lanka Super', 'Southern Transit', 'Northern Star', 'Highway Express'];
-  const driverNames = ['Saman Kumara', 'Nimal Perera', 'Ruwan Silva', 'Sunil Jayasinghe', 'Kamal Fernando', 'Jagath Kumara'];
-  
-  const data = [];
-  for (let i = 1; i <= 45; i++) {
-    const day = (i % 28) + 1;
-    const dateStr = `2026-08-${day.toString().padStart(2, '0')}`;
-    
-    data.push({
-      id: `TR-260${i.toString().padStart(3, '0')}`,
-      start: locations[i % locations.length],
-      destination: locations[(i + 3) % locations.length], 
-      date: dateStr,
-      time: ['06:00 AM', '08:30 AM', '11:15 AM', '02:00 PM', '05:30 PM', '09:45 PM'][i % 6],
-      busCompany: companies[i % companies.length],
-      driverName: driverNames[i % driverNames.length], // Replaced driverId with Driver Name
-      driverPhone: `+94 77 ${Math.floor(100 + Math.random() * 900)} ${Math.floor(1000 + Math.random() * 9000)}`
-    });
+interface Tour {
+  id: string;
+  start: string;
+  destination: string;
+  date: string;
+  time: string;
+  busCompany: string;
+  driverName: string;
+  driverPhone: string;
+}
+
+const tours = ref<Tour[]>([]);
+
+const loadTours = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/tours`);
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      tours.value = [];
+      return;
+    }
+    tours.value = data.map((tour: any) => ({
+      id: String(tour.id),
+      start: String(tour.start || tour.start_location || ''),
+      destination: String(tour.destination || ''),
+      date: String(tour.date || ''),
+      time: String(tour.time || ''),
+      busCompany: String(tour.bus_company || tour.busCompany || ''),
+      driverName: String(tour.driver_name || tour.driverName || ''),
+      driverPhone: String(tour.driver_phone || tour.driverPhone || ''),
+    }));
+  } catch (error) {
+    console.error('Failed to load tours:', error);
+    tours.value = [];
   }
-  
-  // Sort by date ascending to make it realistic for "Upcoming" tours
-  return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-const tours = ref(generateMockTours());
+onMounted(loadTours);
 
-// --------------------------------------------------------
-// STATE & LOGIC
-// --------------------------------------------------------
 const searchQuery = ref('');
 const operatorFilter = ref('All');
 const currentPage = ref(1);
 const itemsPerPage = 20;
 
-// --------------------------------------------------------
-// SEARCH & FILTER COMPUTATIONS
-// --------------------------------------------------------
 const filteredTours = computed(() => {
   return tours.value.filter(tour => {
-    // 1. Operator Filter
     if (operatorFilter.value !== 'All' && tour.busCompany !== operatorFilter.value) {
       return false;
     }
-    
-    // 2. Search Query (ID, Route, or Driver Name)
+
     const q = searchQuery.value.toLowerCase();
     if (q) {
-      return tour.id.toLowerCase().includes(q) || 
-             tour.start.toLowerCase().includes(q) || 
+      return tour.id.toLowerCase().includes(q) ||
+             tour.start.toLowerCase().includes(q) ||
              tour.destination.toLowerCase().includes(q) ||
-             tour.driverName.toLowerCase().includes(q); // Now searching by name
+             tour.driverName.toLowerCase().includes(q);
     }
-    
+
     return true;
   });
 });
 
-// Pagination Computations
 const totalPages = computed(() => Math.ceil(filteredTours.value.length / itemsPerPage) || 1);
 
 const paginatedTours = computed(() => {
@@ -74,12 +74,10 @@ const paginatedTours = computed(() => {
   return filteredTours.value.slice(start, end);
 });
 
-// Reset pagination when search/filter changes
 const onSearchOrFilterChange = () => {
   currentPage.value = 1;
 };
 
-// Unique operators list for the dropdown filter
 const uniqueOperators = computed(() => {
   const operators = new Set(tours.value.map(t => t.busCompany));
   return Array.from(operators).sort();

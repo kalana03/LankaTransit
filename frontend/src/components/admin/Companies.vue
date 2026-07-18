@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue';
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue';
 import { Search, Building2, Plus, X } from 'lucide-vue-next';
 import CompanyCard from './CompanyCard.vue';
 
 interface Company {
-  id: string;
+  id: number | string;
   name: string;
-  ownerName: string;
-  contactNumber: string;
+  owner: string;      
+  contactno: string;  
   email: string;
   address: string;
 }
@@ -16,56 +16,20 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = 6;
 
-const companies = ref<Company[]>([
-  {
-    id: 'CMP-001',
-    name: 'Lanka Express',
-    ownerName: 'Saman Perera',
-    contactNumber: '+94 77 123 4567',
-    email: 'info@lankaexpress.com',
-    address: 'No. 25, Galle Road, Colombo 03, Sri Lanka'
-  },
-  {
-    id: 'CMP-002',
-    name: 'Island Travels',
-    ownerName: 'Nimal Fernando',
-    contactNumber: '+94 71 234 5678',
-    email: 'contact@islandtravels.lk',
-    address: '45 Main Street, Kandy, Sri Lanka'
-  },
-  {
-    id: 'CMP-003',
-    name: 'Southern Lines',
-    ownerName: 'Kasun Jayawardena',
-    contactNumber: '+94 76 345 6789',
-    email: 'support@southernlines.com',
-    address: '12 Beach Road, Galle, Sri Lanka'
-  },
-  {
-    id: 'CMP-004',
-    name: 'Northern Route',
-    ownerName: 'Malaka Silva',
-    contactNumber: '+94 75 456 7890',
-    email: 'admin@northernroute.lk',
-    address: '88 Hospital Road, Jaffna, Sri Lanka'
-  },
-  {
-    id: 'CMP-005',
-    name: 'Coastal Express',
-    ownerName: 'Tharindu Wickramasinghe',
-    contactNumber: '+94 78 567 8901',
-    email: 'hello@coastalexpress.com',
-    address: '102 Station Road, Matara, Sri Lanka'
-  },
-  {
-    id: 'CMP-006',
-    name: 'Hilltop Coaches',
-    ownerName: 'Amal Weerasinghe',
-    contactNumber: '+94 70 678 9012',
-    email: 'service@hilltopcoaches.lk',
-    address: '17 Lake View, Kurunegala, Sri Lanka'
-  }
-]);
+const companies = ref<Company[]>([]);
+
+onMounted(() => {
+  fetch("http://localhost:8080/api/companies")
+  .then((response) => response.json())
+  .then((data) => { 
+      // STRICT CHECK: If data is not an array (e.g., an error object), force it to be an empty array
+      companies.value = Array.isArray(data) ? data : [];  
+  })
+  .catch((error) => {
+      console.error("Fetch failed:", error);
+      companies.value = []; 
+  });
+})
 
 const showNewCompanyModal = ref(false);
 
@@ -78,6 +42,9 @@ const newCompanyForm = ref({
 });
 
 const filteredCompanies = computed(() => {
+  // SAFEGUARD: Ensure we are dealing with an array before filtering
+  if (!Array.isArray(companies.value)) return [];
+
   const query = searchQuery.value.trim().toLowerCase();
 
   if (!query) {
@@ -85,27 +52,34 @@ const filteredCompanies = computed(() => {
   }
 
   return companies.value.filter((company) =>
-    company.id.toLowerCase().includes(query) ||
-    company.name.toLowerCase().includes(query) ||
-    company.ownerName.toLowerCase().includes(query) ||
-    company.contactNumber.toLowerCase().includes(query) ||
-    company.email.toLowerCase().includes(query) ||
-    company.address.toLowerCase().includes(query)
+    // SAFEGUARD: Use optional chaining and fallbacks to prevent crashes if a field is null
+    String(company?.id || '').toLowerCase().includes(query) ||
+    String(company?.name || '').toLowerCase().includes(query) ||
+    String(company?.owner || '').toLowerCase().includes(query) ||
+    String(company?.contactno || '').toLowerCase().includes(query) ||
+    String(company?.email || '').toLowerCase().includes(query) ||
+    String(company?.address || '').toLowerCase().includes(query)
   );
 });
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredCompanies.value.length / itemsPerPage))
-);
+const totalPages = computed(() => {
+  // SAFEGUARD: Prevent math errors if filteredCompanies is invalid
+  if (!Array.isArray(filteredCompanies.value)) return 1;
+  return Math.max(1, Math.ceil(filteredCompanies.value.length / itemsPerPage));
+});
 
 const paginatedCompanies = computed(() => {
+  // SAFEGUARD: Ensure we have an array before attempting to use .slice()
+  if (!Array.isArray(filteredCompanies.value)) return [];
   const start = (currentPage.value - 1) * itemsPerPage;
   return filteredCompanies.value.slice(start, start + itemsPerPage);
 });
 
 const nextCompanyId = computed(() => {
+  if (!Array.isArray(companies.value)) return 'CMP-001';
+
   const maxNumber = companies.value.reduce((max, company) => {
-    const match = company.id.match(/CMP-(\d+)/);
+    const match = String(company?.id || '').match(/CMP-(\d+)/); 
     const num = match ? Number(match[1]) : 0;
     return Math.max(max, num);
   }, 0);
@@ -138,30 +112,40 @@ const closeNewCompanyModal = () => {
   document.body.style.overflow = '';
 };
 
-const addCompany = () => {
-  const company: Company = {
-    id: nextCompanyId.value,
+const addCompany = async ()=>{
+  const company = {
     name: newCompanyForm.value.name.trim(),
-    ownerName: newCompanyForm.value.ownerName.trim(),
-    contactNumber: newCompanyForm.value.contactNumber.trim(),
+    owner: newCompanyForm.value.ownerName.trim(),
+    contactno: newCompanyForm.value.contactNumber.trim(),
     email: newCompanyForm.value.email.trim(),
     address: newCompanyForm.value.address.trim()
   };
 
-  if (
-    !company.name ||
-    !company.ownerName ||
-    !company.contactNumber ||
-    !company.email ||
-    !company.address
-  ) {
+  if (!company.name || !company.owner || !company.contactno || !company.email || !company.address) {
     return;
   }
+  try{
+    const response = await fetch("http://localhost:8080/api/companies/create", {
+          method: "POST", 
+          headers: {
+            "Content-Type": "application/json" 
+          },
+          body: JSON.stringify(company) 
+        });
+    if (!response.ok){
+        throw new Error("Server rejected the request");
+    }
 
-  companies.value.unshift(company);
-  currentPage.value = 1;
-  closeNewCompanyModal();
-  resetNewCompanyForm();
+    const savedCompany = await response.json();
+
+    companies.value.unshift(savedCompany);
+    currentPage.value = 1;
+
+    closeNewCompanyModal();
+    resetNewCompanyForm();
+} catch (error) {
+    console.error("Submission failed:", error);
+  }
 };
 
 onBeforeUnmount(() => {
@@ -296,14 +280,7 @@ onBeforeUnmount(() => {
           </header>
 
           <form @submit.prevent="addCompany" class="relative z-10 p-6 sm:p-8">
-            <div class="mb-6 rounded-2xl border border-slate-800 bg-[#0a0d14] p-4">
-              <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Company ID
-              </p>
-              <p class="font-mono text-lg font-black text-[#5eafff]">
-                {{ nextCompanyId }}
-              </p>
-            </div>
+            
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>

@@ -3,10 +3,10 @@ import { Building2, User, Phone, Mail, MapPin } from 'lucide-vue-next';
 
 defineProps<{
   company: {
-    id: string;
+    id: number | string;
     name: string;
-    ownerName: string;
-    contactNumber: string;
+    owner: string;
+    contactno: string;
     email: string;
     address: string;
   };
@@ -49,8 +49,9 @@ defineProps<{
           <User class="h-4 w-4" />
           <span class="text-[11px] font-bold uppercase tracking-[0.2em]">Owner Name</span>
         </div>
+        <!-- Owner Name -->
         <p class="truncate text-base font-semibold text-white">
-          {{ company.ownerName }}
+          {{ company.owner }}
         </p>
       </div>
 
@@ -60,8 +61,9 @@ defineProps<{
           <Phone class="h-4 w-4" />
           <span class="text-[11px] font-bold uppercase tracking-[0.2em]">Contact</span>
         </div>
+        <!-- Contact Number -->
         <p class="truncate text-base font-semibold text-white">
-          {{ company.contactNumber }}
+          {{ company.contactno }}
         </p>
       </div>
 

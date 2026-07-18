@@ -1,50 +1,68 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { Search } from 'lucide-vue-next';
+import { computed, ref, onMounted } from 'vue';
+import { Search, Plus } from 'lucide-vue-next';
 import RouteCard from './RouteCard.vue';
+import NewRouteForm from './NewRouteForm.vue';
+import { API_BASE } from '../../api';
+
+interface RouteItem {
+  id: string;
+  routeNumber: string;
+  from: string;
+  to: string;
+  status: 'Active' | 'Inactive';
+}
 
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = 6;
+const showNewRouteForm = ref(false);
 
-const routes = ref([
-  {
-    id: 'RT-001',
-    routeNumber: 'R-101',
-    from: 'Colombo',
-    to: 'Kandy'
-  },
-  {
-    id: 'RT-002',
-    routeNumber: 'R-102',
-    from: 'Colombo',
-    to: 'Nuwara Eliya'
-  },
-  {
-    id: 'RT-003',
-    routeNumber: 'R-103',
-    from: 'Galle',
-    to: 'Colombo'
-  },
-  {
-    id: 'RT-004',
-    routeNumber: 'R-104',
-    from: 'Jaffna',
-    to: 'Anuradhapura'
-  },
-  {
-    id: 'RT-005',
-    routeNumber: 'R-105',
-    from: 'Matara',
-    to: 'Colombo'
-  },
-  {
-    id: 'RT-006',
-    routeNumber: 'R-106',
-    from: 'Kurunegala',
-    to: 'Kandy'
+const routes = ref<RouteItem[]>([]);
+
+const normalizeRoute = (route: any): RouteItem => ({
+  id: String(route.id),
+  routeNumber: route.routeNumber || `R-${String(route.id).padStart(3, '0')}`,
+  from: String(route.start || route.start_location || ''),
+  to: String(route.destination || route.destination || ''),
+  status: String(route.status || 'Active').toLowerCase() === 'active' ? 'Active' : 'Inactive',
+});
+
+const loadRoutes = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/routes`);
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      routes.value = [];
+      return;
+    }
+    routes.value = data.map(normalizeRoute);
+  } catch (error) {
+    console.error('Failed to load routes:', error);
+    routes.value = [];
   }
-]);
+};
+
+const deleteRoute = async (routeId: string) => {
+  try {
+    const response = await fetch(`${API_BASE}/routes/delete?id=${routeId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete route');
+    }
+    routes.value = routes.value.filter((route) => route.id !== routeId);
+  } catch (error) {
+    console.error('Delete route failed:', error);
+  }
+};
+
+const onRouteCreated = (route: any) => {
+  routes.value.unshift(normalizeRoute(route));
+  showNewRouteForm.value = false;
+};
+
+onMounted(loadRoutes);
 
 const filteredRoutes = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -67,7 +85,6 @@ const totalPages = computed(() =>
 
 const paginatedRoutes = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
-
   return filteredRoutes.value.slice(start, start + itemsPerPage);
 });
 
@@ -97,6 +114,19 @@ const onSearchChange = () => {
       </div>
     </div>
 
+    <div class="flex w-full flex-col gap-4">
+      <button
+        type="button"
+        @click="showNewRouteForm = !showNewRouteForm"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#5eafff]/20 bg-[#5eafff]/10 px-5 py-3 text-sm font-bold uppercase tracking-widest text-[#5eafff] transition hover:bg-[#5eafff] hover:text-[#0f172a]"
+      >
+        <Plus class="h-4 w-4" />
+        {{ showNewRouteForm ? 'Hide Route Form' : 'Add Route' }}
+      </button>
+
+      <NewRouteForm v-if="showNewRouteForm" @created="onRouteCreated" />
+    </div>
+
     <!-- Route list -->
 <div class="grid items-start w-full grid-cols-1 gap-3 md:grid-cols-2">
   <div
@@ -114,6 +144,7 @@ const onSearchChange = () => {
     v-for="route in paginatedRoutes"
     :key="route.id"
     :route="route"
+    @delete="deleteRoute"
   />
 </div>
 

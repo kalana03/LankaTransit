@@ -1,84 +1,121 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Search, Filter } from 'lucide-vue-next';
 import BookingCard from './BookingCard.vue';
+import { API_BASE } from '../../api';
 
-// --------------------------------------------------------
-// MOCK DATA
-// --------------------------------------------------------
-const generateMockBookings = () => {
-  const locations = ['Colombo', 'Kandy', 'Galle', 'Matara', 'Jaffna', 'Trincomalee'];
-  const data = [];
-  // Increased loop to 45 to better demonstrate pagination functionality
-  for (let i = 1; i <= 45; i++) {
-    const isCancelled = i % 7 === 0;
-    const numSeats = Math.floor(Math.random() * 3) + 1;
-    
-    data.push({
-      id: `LTX-${8000 + i}`,
-      tourId: `TRP-24${i.toString().padStart(3, '0')}`, 
-      name: `Passenger ${i}`,
-      nic: `199${i % 9}123456${i % 2 === 0 ? 'V' : 'X'}`,
-      start: locations[i % locations.length],
-      destination: locations[(i + 2) % locations.length],
-      date: `2026-07-${10 + (i % 15)}`,
-      time: '08:30 AM',
-      seats: Array.from({ length: numSeats }, (_, idx) => `A${idx + 1}`),
-      status: isCancelled ? 'Cancelled' : 'Active',
-      totalPrice: (2450 * numSeats).toFixed(2),
-      email: `passenger${i}@example.com`,
-      phone: `+94 77 123 45${i.toString().padStart(2, '0')}`,
-      address: `No. ${i}, High Level Road, ${locations[i % locations.length]}`, 
-      busCompany: 'LankaTransit Express',
-      busId: `WP-ND-${1000 + i}`,
-      busModel: 'Volvo B11R',
-      driverId: `DRV-${100 + i}`,
-      assistantId: `AST-${500 + i}`
-    });
+interface Booking {
+  id: string;
+  tourId: string;
+  start: string;
+  destination: string;
+  date: string;
+  time: string;
+  name: string;
+  status: string;
+  seats: string[];
+  totalPrice: number | string;
+  email: string;
+  phone: string;
+  address: string;
+  busCompany: string;
+  busId: string;
+  busModel: string;
+  driverId: string;
+  assistantId: string;
+  nic: string;
+}
+
+const bookings = ref<Booking[]>([]);
+
+const loadBookings = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/bookings`);
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      bookings.value = [];
+      return;
+    }
+    bookings.value = data.map((booking: any) => ({
+      id: String(booking.id),
+      tourId: String(booking.tour_id || booking.tourId || ''),
+      start: String(booking.start || ''),
+      destination: String(booking.destination || ''),
+      date: String(booking.date || ''),
+      time: String(booking.time || ''),
+      name: String(booking.name || ''),
+      status: String(booking.status || 'Active'),
+      seats: Array.isArray(booking.seats) ? booking.seats : [],
+      totalPrice: booking.total_price ?? booking.totalPrice ?? 0,
+      email: String(booking.email || ''),
+      phone: String(booking.phone || ''),
+      address: String(booking.address || ''),
+      busCompany: String(booking.bus_company || booking.busCompany || ''),
+      busId: String(booking.bus_id || booking.busId || ''),
+      busModel: String(booking.bus_model || booking.busModel || ''),
+      driverId: String(booking.driver_id || booking.driverId || ''),
+      assistantId: String(booking.assistant_id || booking.assistantId || ''),
+      nic: String(booking.nic || ''),
+    }));
+  } catch (error) {
+    console.error('Failed to load bookings:', error);
+    bookings.value = [];
   }
-  return data;
 };
 
-const bookings = ref(generateMockBookings());
-
-// --------------------------------------------------------
-// STATE & LOGIC
-// --------------------------------------------------------
 const searchQuery = ref('');
 const statusFilter = ref('All');
 const currentPage = ref(1);
-const itemsPerPage = 10; // Max items per page
+const itemsPerPage = 10;
 
-// Handle Cancellation emitted from the Modal
-const handleCancelBooking = (id: string) => {
-  if (confirm(`Are you sure you want to cancel booking ${id}?`)) {
-    const index = bookings.value.findIndex(b => b.id === id);
-    if (index !== -1) bookings.value[index].status = 'Cancelled';
+const handleCancelBooking = async (id: string) => {
+  const booking = bookings.value.find((booking) => booking.id === id);
+  if (!booking) return;
+
+  if (!confirm(`Are you sure you want to cancel booking ${id}?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/bookings/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...booking,
+        tour_id: Number(booking.tourId),
+        id: Number(booking.id),
+        status: 'Cancelled',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update booking');
+    }
+
+    booking.status = 'Cancelled';
+  } catch (error) {
+    console.error('Cancellation failed:', error);
   }
 };
 
-// --------------------------------------------------------
-// SEARCH, FILTER, & PAGINATION COMPUTATIONS
-// --------------------------------------------------------
+onMounted(loadBookings);
+
 const filteredBookings = computed(() => {
   return bookings.value.filter(booking => {
-    // Status Filter
     if (statusFilter.value !== 'All' && booking.status !== statusFilter.value) return false;
-    
-    // Search Query (ID, Tour ID, Name, or NIC)
+
     const q = searchQuery.value.toLowerCase();
     if (q) {
-      return booking.id.toLowerCase().includes(q) || 
-             booking.tourId.toLowerCase().includes(q) || 
-             booking.name.toLowerCase().includes(q) || 
+      return booking.id.toLowerCase().includes(q) ||
+             booking.tourId.toLowerCase().includes(q) ||
+             booking.name.toLowerCase().includes(q) ||
              booking.nic.toLowerCase().includes(q);
     }
-    
+
     return true;
   });
 });
 
-// Pagination Math
 const totalPages = computed(() => Math.ceil(filteredBookings.value.length / itemsPerPage) || 1);
 
 const paginatedBookings = computed(() => {
@@ -87,7 +124,6 @@ const paginatedBookings = computed(() => {
   return filteredBookings.value.slice(start, end);
 });
 
-// Reset pagination when search or filter values change
 const resetPagination = () => {
   currentPage.value = 1;
 };
